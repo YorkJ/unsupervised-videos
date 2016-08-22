@@ -2,7 +2,7 @@ from data_handler import *
 import lstm
 
 
-class LSTMCombo(object):
+class LSTMVideoTraj(object):
   def __init__(self, model):
     self.model_ = model
     
@@ -242,6 +242,7 @@ class LSTMCombo(object):
     self.future_seq_length_ = future_seq_length
     self.lstm_stack_enc_.SetBatchSize(batch_size, self.enc_seq_length_)
     self.v_ = cm.empty((batch_size, seq_length * self.num_dims_))
+    self.n_ = cm.empty((batch_size, seq_length * batch_size))
     if dec_seq_length > 0:
       self.lstm_stack_dec_.SetBatchSize(batch_size, dec_seq_length)
       self.v_dec_ = cm.empty((batch_size, dec_seq_length * self.num_dims_))
@@ -344,8 +345,9 @@ class LSTMCombo(object):
       newline = False
       sys.stdout.write('\rStep %d' % ii)
       sys.stdout.flush()
-      v_cpu, _ = train_data.GetBatch()
+      v_cpu, n_cpu = train_data.GetBatch()
       self.v_.overwrite(v_cpu)
+      self.n_.overwrite(n_cpu)
       self.Fprop(train=True)
 
       # Compute Performance.
@@ -391,7 +393,7 @@ class LSTMCombo(object):
 
 def main():
   model = ReadModelProto(sys.argv[1])
-  lstm_autoencoder = LSTMCombo(model)
+  lstm_autoencoder = LSTMTraj(model)
   train_data = ChooseDataHandler(ReadDataProto(sys.argv[2]))
   valid_data = ChooseDataHandler(ReadDataProto(sys.argv[3]))
   lstm_autoencoder.Train(train_data, valid_data)
